@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 Global Rewards - Earn & Withdraw</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💰 Global Rewards</h1>
+            <div class="user-status">
+                <span id="user-tier" class="tier-badge">FREE</span>
+                <span id="referral-code" class="referral-code"></span>
+            </div>
+        </header>
+
+        <!-- Balance Section -->
+        <div class="balance-card">
+            <h2>Your Balance</h2>
+            <div class="balance-amount" id="balance">$0.00</div>
+            <div class="balance-details">
+                <p>Pending: <span id="pending">$0.00</span></p>
+                <p>Withdrawn: <span id="withdrawn">$0.00</span></p>
+            </div>
+        </div>
+
+        <!-- Earning Options -->
+        <div class="earning-section">
+            <h3>🎯 Earn Money</h3>
+            
+            <div class="reward-buttons">
+                <button class="btn btn-primary" onclick="claimDailyReward()">
+                    📅 Claim Daily Reward
+                    <span class="reward-amount" id="daily-amount">+$0.10</span>
+                </button>
+
+                <button class="btn btn-secondary" onclick="watchAd()">
+                    📺 Watch Ad
+                    <span class="reward-amount" id="ad-amount">+$0.05</span>
+                </button>
+
+                <button class="btn btn-secondary" onclick="completeTask()">
+                    ✅ Complete Task
+                    <span class="reward-amount">+$0.25</span>
+                </button>
+
+                <button class="btn btn-secondary" onclick="referFriend()">
+                    👥 Refer Friend
+                    <span class="reward-amount">+$1.00</span>
+                </button>
+            </div>
+
+            <!-- Task Feed -->
+            <div class="tasks-section" id="tasks-section" style="display:none;">
+                <h4>Available Tasks</h4>
+                <div id="task-list" class="task-list">
+                    <!-- Tasks loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Daily Streak -->
+            <div class="streak-info">
+                <p>🔥 Daily Streak: <span id="streak">0</span> days</p>
+                <p>Next claim in: <span id="claim-timer">24:00:00</span></p>
+            </div>
+        </div>
+
+        <!-- Pro Upgrade Section -->
+        <div class="pro-section">
+            <h3>🚀 Upgrade to Pro</h3>
+            <div class="pro-comparison">
+                <div class="plan free">
+                    <h4>Free</h4>
+                    <p class="price">$0/month</p>
+                    <ul>
+                        <li>✓ Daily Reward: $0.10</li>
+                        <li>✓ Ad Reward: $0.05</li>
+                        <li>✗ 2x Multiplier</li>
+                        <li>✗ Priority Tasks</li>
+                        <li>✗ Direct Withdrawal</li>
+                    </ul>
+                </div>
+                <div class="plan pro">
+                    <h4>PRO ⭐</h4>
+                    <p class="price">$4.99/month</p>
+                    <ul>
+                        <li>✓ Daily Reward: $0.20</li>
+                        <li>✓ Ad Reward: $0.10</li>
+                        <li>✓ 2x Multiplier</li>
+                        <li>✓ Priority Tasks</li>
+                        <li>✓ Direct Withdrawal</li>
+                    </ul>
+                    <button class="btn btn-pro" onclick="showPaymentModal('pro')">Unlock Pro</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Withdrawal Section -->
+        <div class="withdrawal-section">
+            <h3>💸 Withdraw Earnings</h3>
+            <div class="withdrawal-methods">
+                <button class="method-btn" onclick="showWithdrawalModal('momo')">
+                    <span class="icon">📱</span>
+                    MTN MoMo
+                </button>
+                <button class="method-btn" onclick="showWithdrawalModal('stripe')">
+                    <span class="icon">💳</span>
+                    Bank Transfer (Stripe)
+                </button>
+                <button class="method-btn" onclick="showWithdrawalModal('paypal')">
+                    <span class="icon">🔵</span>
+                    PayPal
+                </button>
+            </div>
+            <p class="withdrawal-note">Minimum withdrawal: $1.00 | Processing time: 1-3 business days</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-section">
+            <h3>📊 Your Stats</h3>
+            <div class="stats-grid">
+                <div class="stat">
+                    <label>Total Earned</label>
+                    <span id="total-earned">$0.00</span>
+                </div>
+                <div class="stat">
+                    <label>Tasks Completed</label>
+                    <span id="tasks-completed">0</span>
+                </div>
+                <div class="stat">
+                    <label>Ads Watched</label>
+                    <span id="ads-watched">0</span>
+                </div>
+                <div class="stat">
+                    <label>Referrals</label>
+                    <span id="referrals-count">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <h2 id="payment-title">Payment</h2>
+            
+            <!-- MTN MoMo Section -->
+            <div id="momo-payment" class="payment-method" style="display:none;">
+                <h3>MTN MoMo Payment</h3>
+                <div class="form-group">
+                    <label>Phone Number (include country code)</label>
+                    <input type="tel" id="momo-phone" placeholder="+256 (Uganda) or +234 (Nigeria)">
+                </div>
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" id="momo-amount" placeholder="0.00" min="1" step="0.01">
+                </div>
+                <p class="fee-info">Fee: <span id="momo-fee">$0.00</span></p>
+                <button class="btn btn-primary" onclick="processMoMo()">Send Request</button>
+                <p class="processing-info">You'll receive a prompt on your phone to confirm</p>
+            </div>
+
+            <!-- Stripe Section -->
+            <div id="stripe-payment" class="payment-method" style="display:none;">
+                <h3>Bank Transfer via Stripe</h3>
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" id="stripe-amount" placeholder="0.00" min="1" step="0.01">
+                </div>
+                <p class="fee-info">Fee: <span id="stripe-fee">$0.00</span></p>
+                <div id="card-element"></div>
+                <button class="btn btn-primary" onclick="processStripe()">Pay with Card</button>
+            </div>
+
+            <!-- PayPal Section -->
+            <div id="paypal-payment" class="payment-method" style="display:none;">
+                <h3>PayPal Transfer</h3>
+                <div class="form-group">
+                    <label>PayPal Email</label>
+                    <input type="email" id="paypal-email" placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" id="paypal-amount" placeholder="0.00" min="1" step="0.01">
+                </div>
+                <p class="fee-info">Fee: <span id="paypal-fee">$0.00</span></p>
+                <button class="btn btn-primary" onclick="processPayPal()">Request Payout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral Modal -->
+    <div id="referral-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeReferralModal()">&times;</button>
+            <h2>Refer & Earn</h2>
+            <p>Share your referral code and earn <strong>$1.00</strong> for each friend who signs up!</p>
+            <div class="referral-code-display">
+                <input type="text" id="referral-input" readonly>
+                <button class="btn btn-secondary" onclick="copyReferralCode()">Copy Link</button>
+            </div>
+            <div class="referral-stats">
+                <p>Friends Referred: <span id="referral-count">0</span></p>
+                <p>Earned from Referrals: $<span id="referral-earnings">0.00</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ad Modal -->
+    <div id="ad-modal" class="modal">
+        <div class="modal-content ad-content">
+            <button class="close-btn" onclick="closeAdModal()">&times;</button>
+            <h2>Watch Ad - Earn $0.05</h2>
+            <div class="ad-video" id="ad-video">
+                <video width="100%" controls id="video-player">
+                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="ad-timer">
+                <p>Video completes in: <span id="video-timer">0:30</span></p>
+            </div>
+            <button class="btn btn-primary" id="claim-ad-btn" disabled onclick="claimAdReward()">
+                Claim Reward
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
